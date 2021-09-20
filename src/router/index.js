@@ -1,6 +1,9 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import Distribuidores from '../views/dashboard/Distribuidores.vue';
+import Dashboard from '../views/dashboard/index.vue';
 import Garantia from '../views/Garantia.vue';
+import Login from '../views/Login.vue';
 
 Vue.use(VueRouter);
 
@@ -12,6 +15,29 @@ const routes = [
     meta: {
       layout: 'LayoutHome',
     },
+  },
+  {
+    path: '/master-login',
+    name: 'Login',
+    component: Login,
+    meta: {
+      layout: 'LayoutHome',
+    },
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard,
+    meta: {
+      layout: 'LayoutDashboard',
+    },
+    children: [
+      {
+        path: 'distribuidores',
+        name: 'distribuidores',
+        component: Distribuidores,
+      },
+    ],
   },
   /*  {
     path: '/about',

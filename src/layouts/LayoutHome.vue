@@ -1,27 +1,49 @@
 <template>
   <v-app>
-    <v-app-bar app color="primary" dark>
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
-      </div>
-
-      <v-spacer></v-spacer>
-
-      <v-btn to="/dashboard" text>
-        <span class="mr-2">Dashboard</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
+    <v-app-bar color="primary" app height="80px">
+      <v-img
+        alt="Makita"
+        class="shrink mx-auto "
+        src="@/assets/img/logotipo_makita.png"
+        width="219"
+        height="100%"
+        contain
+      />
     </v-app-bar>
 
     <v-main>
       <slot />
     </v-main>
+
+    <!-- Snackbar -->
+    <v-snackbar v-model="show" :timeout="toast.time" top right :color="toast.color">
+      {{ toast.text }}
+      <template v-slot:action="{ attrs }">
+        <v-btn dark text v-bind="attrs" @click="show = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
+
+<script>
+import { mapState, mapMutations } from 'vuex';
+export default {
+  computed: {
+    ...mapState('ui', ['toast']),
+
+    show: {
+      get() {
+        return this.toast.show;
+      },
+      set(val) {
+        this.setToastVisibility(val);
+      },
+    },
+  },
+  methods: {
+    ...mapMutations('ui', ['setToastVisibility']),
+  },
+};
+</script>

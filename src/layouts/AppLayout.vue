@@ -10,7 +10,11 @@ export default {
   name: 'AppLayout',
   computed: {
     layout() {
-      const layout = this.$route.meta.layout || defaultLayout;
+      let layout = this.$route.meta.layout || defaultLayout;
+      if (this.$route.matched && this.$route.matched.length > 1) {
+        const route = this.$route.matched[0];
+        layout = route.meta.layout || defaultLayout;
+      }
       return () => import(`@/layouts/${layout}.vue`);
     },
   },

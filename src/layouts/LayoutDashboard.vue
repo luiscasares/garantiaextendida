@@ -10,6 +10,14 @@
             <v-list-item-title v-text="item.title" />
           </v-list-item-content>
         </v-list-item>
+        <v-list-item @click="downloadExcel">
+          <v-list-item-action>
+            <v-icon>mdi-chart-bubble</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Descargar Excel</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
       </v-list>
       <div class="v-navigation-drawer__border"></div>
     </v-navigation-drawer>
@@ -25,35 +33,26 @@
       </v-container>
     </v-main>
 
-    <v-navigation-drawer v-model="rightDrawer" :right="right" permanent>
-      <v-list>
-        <v-list-item @click.native="right = !right">
-          <v-list-item-action>
-            <v-icon light>
-              mdi-repeat
-            </v-icon>
-          </v-list-item-action>
-          <v-list-item-title>Switch drawer (click me)</v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
     <v-footer :fixed="fixed" app>
       <span>&copy; {{ new Date().getFullYear() }}</span>
     </v-footer>
 
     <!-- Snackbar -->
-    <!--   <v-snackbar v-model="show" :timeout="toast.time" top right :color="toast.color">
+    <!-- Snackbar -->
+    <v-snackbar v-model="show" :timeout="toast.time" top right :color="toast.color">
       {{ toast.text }}
       <template v-slot:action="{ attrs }">
         <v-btn dark text v-bind="attrs" @click="show = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </template>
-    </v-snackbar> -->
+    </v-snackbar>
   </v-app>
 </template>
 
 <script>
+import { mapState, mapMutations } from 'vuex';
+
 export default {
   data() {
     return {
@@ -63,13 +62,8 @@ export default {
       items: [
         {
           icon: 'mdi-apps',
-          title: 'Vacantes',
-          to: '/dashboard',
-        },
-        {
-          icon: 'mdi-chart-bubble',
-          title: 'Inspire',
-          to: '/inspire',
+          title: 'Distribuidores',
+          to: '/dashboard/distribuidores',
         },
       ],
       miniVariant: false,
@@ -80,6 +74,8 @@ export default {
   },
 
   computed: {
+    ...mapState('ui', ['toast']),
+
     show: {
       get() {
         return this.toast.show;
@@ -87,6 +83,22 @@ export default {
       set(value) {
         this.setToastVisibility(value);
       },
+    },
+  },
+  methods: {
+    ...mapMutations('ui', ['setToastVisibility']),
+    async downloadExcel() {
+      try {
+        const res = await this.axios.get('exportarExcel.php');
+        const i = document.createElement('a');
+        i.href = res.data.file;
+        document.body.appendChild(i);
+        i.download = 'Garantias.xlsx';
+        i.click();
+        i.remove();
+      } catch (error) {
+        console.log(error);
+      }
     },
   },
 };
