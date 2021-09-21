@@ -67,7 +67,7 @@
         </fieldset>
       </v-flex>
       <v-flex class="mt-5">
-        <v-form ref="form" lazy-validation>
+        <v-form :disabled="loading" ref="form" lazy-validation>
           <h3>Formulario</h3>
           <v-row class="px-1">
             <v-col cols="6">
@@ -115,7 +115,7 @@
               ></v-select>
             </v-col>
             <v-col cols="6">
-              <v-select
+              <v-autocomplete
                 :disabled="!form.state"
                 v-model="form.nomDis"
                 :items="distribuidoresItems"
@@ -125,12 +125,12 @@
                 hint="En caso de no encontrar el nombre del Distribuidor, selecciona OTRO, al final de la lista."
                 persistent-hint
                 return-object
-              ></v-select>
+              ></v-autocomplete>
             </v-col>
 
             <v-col cols="6" v-if="isCustomDis">
               <v-text-field
-                v-model="form.customNombre"
+                v-model="form.customDisName"
                 label="Nombre del distribuidor"
                 :rules="[rules.required]"
               ></v-text-field>
@@ -162,7 +162,7 @@
  -->
 
             <v-col cols="12" v-if="isCustomDis">
-              <v-file-input label="Comprobante de pago"></v-file-input>
+              <v-file-input v-model="imageFile" label="Comprobante de pago"></v-file-input>
             </v-col>
 
             <v-col cols="12" class="text-center">
@@ -190,6 +190,7 @@
 import VueRecaptcha from 'vue-recaptcha';
 
 import { rules } from '@/helpers/form';
+import { mapActions } from 'vuex';
 export default {
   components: {
     VueRecaptcha,
@@ -203,6 +204,7 @@ export default {
       loadingDistribuidores: false,
       form: {},
       captcha: false,
+      imageFile: null,
     };
   },
   async mounted() {
@@ -265,12 +267,13 @@ export default {
     },
   },
   methods: {
+    ...mapActions('ui', ['showToast']),
     async save() {
       const isValid = this.$refs.form.validate();
       if (!isValid) {
         return;
       }
-      console.log(this.form);
+      this.loading = true;
       const formData = new FormData();
       formData.append('nombre', this.form.nombre);
       formData.append('email', this.form.email);
@@ -279,22 +282,55 @@ export default {
       formData.append('numFac', this.form.numFac);
       formData.append('numSerie', this.form.numSerie);
       formData.append('dirDis', this.form.dirDis);
-      /* let nombreDistribuidor = this.distribuidorSelected.nombreDistribuidor;
-      if (this.form.nomDis === 'other') {
-        nombreDistribuidor = this.form.customDisName;
-        //data.image = this.imageFile;
-        formData.append('image', this.imageFile);
-      } */
+      if (this.form.nomDis) {
+        if (this.isCustomDis) {
+          const nombreDistribuidor = this.form.customDisName;
+          formData.append('nomDis', nombreDistribuidor);
+          formData.append('image', this.imageFile);
+        } else if (this.form.nomDis.text) {
+          formData.append('nomDis', this.form.nomDis.text);
+        }
+      }
       try {
         const response = await this.axios.post('/generarPdf.php', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
-        console.log(response);
-        console.log('save');
+        this.showToast({
+          text:
+            'Se te ha enviado una copia de la garantia a tu correo electronico, revisa tu bandeja de entrada',
+          time: 60000,
+          color: 'success',
+        });
+        if (response) {
+          this.$refs.form.reset();
+
+          try {
+            const byteCharacters = atob(response.data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const file = new Blob([byteArray], {
+              type: 'application/pdf;base64',
+            });
+            const fileURL = URL.createObjectURL(file);
+            window.open(fileURL);
+          } catch (error) {
+            console.log(error);
+          }
+        }
       } catch (error) {
         console.log(error);
+        this.showToast({
+          text: 'Ocurrio un error al realizar la garantia',
+          time: 5000,
+          color: 'error',
+        });
+      } finally {
+        this.loading = false;
       }
     },
   },
